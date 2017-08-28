@@ -406,6 +406,7 @@ public class AddressBook {
         }
     }
 
+    // Converts command types to lower case, so user input can be non case-sensitive
     private static String convertLowerCase(String command) {
         return command.toLowerCase();
     }
@@ -535,7 +536,7 @@ public class AddressBook {
     }
 
     /**
-     * Checks validity of delete person argument string's format.
+     * Checks validity of the input index person argument string's format.
      *
      * @param rawArgs raw command args string for the delete person command
      * @return whether the input args string is valid
@@ -550,7 +551,7 @@ public class AddressBook {
     }
 
     /**
-     * Extracts the target's index from the raw delete person args string
+     * Extracts the target's index from the raw command type args string
      *
      * @param rawArgs raw command args string for the delete person command
      * @return extracted index
@@ -580,6 +581,12 @@ public class AddressBook {
         return String.format(MESSAGE_DELETE_PERSON_SUCCESS, getMessageForFormattedPersonData(deletedPerson));
     }
 
+    /**
+     * Updates person identified using last displayed index.
+     *
+     * @param commandArgs full command args string from the user
+     * @return feedback display message for the operation result
+     */
     private static String executeUpdateContact(String commandArgs) {
         if (!isIndexValid(commandArgs)) {
             return getMessageForInvalidCommandInput(COMMAND_UPDATE_WORD, getUsageInfoForUpdateCommand());
@@ -600,21 +607,7 @@ public class AddressBook {
 
     }
 
-    private static void printUpdateDemo() {
-        System.out.println(LINE_PREFIX + "Example: " + COMMAND_UPDATE_EXAMPLE
-                                + " to update phone or email respectively");
-        System.out.print(LINE_PREFIX + "Enter Command: ");
-    }
-    //prints the message to show the selected contact in address book
-    private static void printTargetAddressIndex(String[] address) {
-        System.out.println(LINE_PREFIX + MESSAGE_UPDATE_CONTACT + address[PERSON_DATA_INDEX_NAME]);
-    }
-
-    private static String getUpdateInput() {
-        final String command = SCANNER.next();
-        return command.trim();
-    }
-
+    // Executes the update by detecting whether there is an update on phone number or email
     private static String updateContact(String command, String[] contact ) {
         command = convertLowerCase(command);
         switch(command) {
@@ -627,6 +620,7 @@ public class AddressBook {
         }
     }
 
+    // Updates the phone number of the specified contact, and saves it into AddressBook
     private static String updatePhoneNumber(String[] contact) {
         final String number = getUpdateInput();
         echoUserCommand(PERSON_PROPERTY_PHONE + " " + number);
@@ -641,6 +635,7 @@ public class AddressBook {
         return MESSAGE_UPDATE_NUMBER_COMPLETED;
     }
 
+    // Updates the email of the specified contact, and saves it into AddressBook
     private static String updateEmail(String[] contact) {
         final String email = getUpdateInput();
         echoUserCommand(PERSON_PROPERTY_EMAIL + " " + email);
@@ -703,6 +698,24 @@ public class AddressBook {
             inputLine = SCANNER.nextLine();
         }
         return inputLine;
+    }
+
+    // Gets additional input on the update type and information
+    private static String getUpdateInput() {
+        final String command = SCANNER.next();
+        return command.trim();
+    }
+
+    // Shows a demonstration of how to use the update method to let users understand how to use it
+    private static void printUpdateDemo() {
+        System.out.println(LINE_PREFIX + "Example: " + COMMAND_UPDATE_EXAMPLE
+                + " to update phone or email respectively");
+        System.out.print(LINE_PREFIX + "Enter Command: ");
+    }
+
+    // Prints the message to show the selected contact in address book
+    private static void printTargetAddressIndex(String[] address) {
+        System.out.println(LINE_PREFIX + MESSAGE_UPDATE_CONTACT + address[PERSON_DATA_INDEX_NAME]);
     }
 
    /*
