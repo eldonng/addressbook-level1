@@ -89,9 +89,10 @@ public class AddressBook {
     private static final String MESSAGE_PERSONS_FOUND_OVERVIEW = "%1$d persons found!";
     private static final String MESSAGE_STORAGE_FILE_CREATED = "Created new empty storage file: %1$s";
     private static final String MESSAGE_WELCOME = "Welcome to your Address Book!";
-    private static final String MESSAGE_UPDATE_CONTACT = "The following contact is selected to be updated: ";
+
     private static final String MESSAGE_UPDATE_NUMBER_COMPLETED = "Phone number has been successfully updated";
     private static final String MESSAGE_UPDATE_EMAIL_COMPLETED = "Email has been successfully updated";
+    private static final String MESSAGE_UPDATE_DONE = "Updated Contact: ";
     private static final String MESSAGE_USING_DEFAULT_FILE = "Using default storage file : " + DEFAULT_STORAGE_FILEPATH;
 
     // These are the prefix strings to define the data type of a command parameter
@@ -99,10 +100,15 @@ public class AddressBook {
     private static final String PERSON_DATA_PREFIX_EMAIL = "e/";
     private static final String PERSON_PROPERTY_PHONE = "phone";
     private static final String PERSON_PROPERTY_EMAIL = "email";
+    private static final String PERSON_CANCEL_REQUEST = "cancel";
 
     private static final String PERSON_STRING_REPRESENTATION = "%1$s " // name
                                                             + PERSON_DATA_PREFIX_PHONE + "%2$s " // phone
                                                             + PERSON_DATA_PREFIX_EMAIL + "%3$s"; // email
+
+    private static final String MESSAGE_UPDATE_PENDING = "The following contact is selected to be updated: " + LS +
+                                                     PERSON_STRING_REPRESENTATION;
+
     private static final String COMMAND_ADD_WORD = "add";
     private static final String COMMAND_ADD_DESC = "Adds a person to the address book.";
     private static final String COMMAND_ADD_PARAMETERS = "NAME "
@@ -140,8 +146,14 @@ public class AddressBook {
 
     private static final String COMMAND_UPDATE_WORD = "update";
     private static final String COMMAND_UPDATE_DESC = "Updates existing information in address book";
-    private static final String COMMAND_UPDATE_EXAMPLE = "\"phone 1234567\" OR \"email sample@gmail.com\"";
-    private static final String COMMAND_UPDATE_EXAMPLE2 = COMMAND_UPDATE_WORD + " 1" + LS + COMMAND_UPDATE_EXAMPLE;
+    private static final String COMMAND_UPDATE_EXAMPLE = "\"phone 1234567\" or \"email sample@gmail.com\"";
+    private static final String COMMAND_UPDATE_EXAMPLE2 = COMMAND_UPDATE_WORD + " 1" + LS +
+                                                        " Enter New Contact Details: " + COMMAND_UPDATE_EXAMPLE;
+    private static final String COMMAND_UPDATE_PROMPT = "Enter \"cancel\" to you do not wish to update this contact";
+    private static final String COMMAND_UPDATE_CANCELLED = "The request to update the following contact has been " +
+                                                        "cancelled: %1$s";
+
+    private static final String MESSAGE_UPDATE_SAMPLE = "Sample Input: " + COMMAND_UPDATE_EXAMPLE;
 
 
 
@@ -607,22 +619,35 @@ public class AddressBook {
 
     }
 
+    // Prints the message to show the selected contact in address book
+    private static void printTargetAddressIndex(String[] address) {
+        final String messageForUpdate = String.format(MESSAGE_UPDATE_PENDING,
+                getNameFromPerson(address),getPhoneFromPerson(address), getEmailFromPerson(address));
+        showToUser(messageForUpdate);
+        showToUser(COMMAND_UPDATE_PROMPT);
+    }
+
     // Executes the update by detecting whether there is an update on phone number or email
-    private static String updateContact(String command, String[] contact ) {
-        command = convertLowerCase(command);
-        switch(command) {
+    private static String updateContact(String userInputString, String[] contact ) {
+        final String[] commandTypeAndParams = splitCommandWordAndArgs(userInputString);
+        final String commandType = commandTypeAndParams[0];
+        final String lowerCaseCommandType = convertLowerCase(commandType);
+        final String commandArgs = commandTypeAndParams[1];
+
+        switch(commandType) {
             case PERSON_PROPERTY_PHONE:
-                return updatePhoneNumber(contact);
+                return updatePhoneNumber(contact, commandArgs);
             case PERSON_PROPERTY_EMAIL:
-                return updateEmail(contact);
+                return updateEmail(contact, commandArgs);
+            case PERSON_CANCEL_REQUEST:
+                return String.format(COMMAND_UPDATE_CANCELLED, getNameFromPerson(contact));
             default:
-                return getMessageForInvalidCommandInput(command, getUsageInfoForAllCommands());
+                return getMessageForInvalidCommandInput(commandType, getUsageInfoForUpdateCommand());
         }
     }
 
     // Updates the phone number of the specified contact, and saves it into AddressBook
-    private static String updatePhoneNumber(String[] contact) {
-        final String number = getUpdateInput();
+    private static String updatePhoneNumber(String[] contact, String number) {
         echoUserCommand(PERSON_PROPERTY_PHONE + " " + number);
 
         final String[] updatedContact = new String[PERSON_DATA_COUNT];
@@ -632,12 +657,14 @@ public class AddressBook {
 
         updatePersonToAddressBook(contact, updatedContact);
 
-        return MESSAGE_UPDATE_NUMBER_COMPLETED;
+        return MESSAGE_UPDATE_NUMBER_COMPLETED + LS + MESSAGE_UPDATE_DONE + String.format(PERSON_STRING_REPRESENTATION,
+                getNameFromPerson(updatedContact), getPhoneFromPerson(updatedContact),
+                getEmailFromPerson(updatedContact));
     }
 
     // Updates the email of the specified contact, and saves it into AddressBook
-    private static String updateEmail(String[] contact) {
-        final String email = getUpdateInput();
+    private static String updateEmail(String[] contact, String email) {
+
         echoUserCommand(PERSON_PROPERTY_EMAIL + " " + email);
 
         final String[] updatedContact = new String[PERSON_DATA_COUNT];
@@ -647,7 +674,9 @@ public class AddressBook {
 
         updatePersonToAddressBook(contact, updatedContact);
 
-        return MESSAGE_UPDATE_EMAIL_COMPLETED;
+        return MESSAGE_UPDATE_EMAIL_COMPLETED + LS + MESSAGE_UPDATE_DONE + String.format(PERSON_STRING_REPRESENTATION,
+                getNameFromPerson(updatedContact), getPhoneFromPerson(updatedContact),
+                getEmailFromPerson(updatedContact));
     }
 
     /**
@@ -691,7 +720,7 @@ public class AddressBook {
      * @return full line entered by the user
      */
     private static String getUserInput() {
-        System.out.print(LINE_PREFIX + "Enter command: ");
+        System.out.print(LINE_PREFIX + "Enter Command: ");
         String inputLine = SCANNER.nextLine();
         // silently consume all blank and comment lines
         while (inputLine.trim().isEmpty() || inputLine.trim().charAt(0) == INPUT_COMMENT_MARKER) {
@@ -702,20 +731,15 @@ public class AddressBook {
 
     // Gets additional input on the update type and information
     private static String getUpdateInput() {
-        final String command = SCANNER.next();
+        final String command = SCANNER.nextLine();
         return command.trim();
     }
 
     // Shows a demonstration of how to use the update method to let users understand how to use it
     private static void printUpdateDemo() {
-        System.out.println(LINE_PREFIX + "Example: " + COMMAND_UPDATE_EXAMPLE
-                + " to update phone or email respectively");
-        System.out.print(LINE_PREFIX + "Enter Command: ");
-    }
-
-    // Prints the message to show the selected contact in address book
-    private static void printTargetAddressIndex(String[] address) {
-        System.out.println(LINE_PREFIX + MESSAGE_UPDATE_CONTACT + address[PERSON_DATA_INDEX_NAME]);
+        System.out.println(LINE_PREFIX);
+        showToUser(MESSAGE_UPDATE_SAMPLE);
+        System.out.print(LINE_PREFIX + "Enter New Contact Details: ");
     }
 
    /*
@@ -1202,6 +1226,7 @@ public class AddressBook {
                 + getUsageInfoForViewCommand() + LS
                 + getUsageInfoForDeleteCommand() + LS
                 + getUsageInfoForClearCommand() + LS
+                + getUsageInfoForUpdateCommand() + LS
                 + getUsageInfoForExitCommand() + LS
                 + getUsageInfoForHelpCommand();
     }
@@ -1231,7 +1256,7 @@ public class AddressBook {
     private static String getUsageInfoForUpdateCommand() {
         return String.format(MESSAGE_COMMAND_HELP, COMMAND_UPDATE_WORD, COMMAND_UPDATE_DESC) + LS
                 + String.format(MESSAGE_COMMAND_HELP_PARAMETERS, COMMAND_DELETE_PARAMETER) + LS
-                + String.format(MESSAGE_COMMAND_HELP_EXAMPLE, COMMAND_UPDATE_EXAMPLE + COMMAND_UPDATE_EXAMPLE2) + LS;
+                + String.format(MESSAGE_COMMAND_HELP_EXAMPLE, COMMAND_UPDATE_EXAMPLE2) + LS;
     }
 
 
