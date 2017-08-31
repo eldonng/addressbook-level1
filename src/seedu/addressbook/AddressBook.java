@@ -65,6 +65,8 @@ public class AddressBook {
      * at which java String.format(...) method can insert values.
      * =========================================================================
      */
+    private static final String MESSAGE_PROMPT = "Are you sure you want to do the following action? (Y/N)";
+    private static final String MESSAGE_ACTION_CANCELLED = "The action has been cancelled.";
     private static final String MESSAGE_ADDED = "New person added: %1$s, Phone: %2$s, Email: %3$s";
     private static final String MESSAGE_ADDRESSBOOK_CLEARED = "Address book has been cleared!";
     private static final String MESSAGE_COMMAND_HELP = "%1$s: %2$s";
@@ -542,9 +544,14 @@ public class AddressBook {
         if (!isDisplayIndexValidForLastPersonListingView(targetVisibleIndex)) {
             return MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
         }
+
         final String[] targetInModel = getPersonByLastVisibleIndex(targetVisibleIndex);
-        return deletePersonFromAddressBook(targetInModel) ? getMessageForSuccessfulDelete(targetInModel) // success
-                                                          : MESSAGE_PERSON_NOT_IN_ADDRESSBOOK; // not found
+
+        if(userConfirmAction(targetInModel)) {
+            return deletePersonFromAddressBook(targetInModel) ? getMessageForSuccessfulDelete(targetInModel) // success
+                    : MESSAGE_PERSON_NOT_IN_ADDRESSBOOK; // not found
+        }
+        return MESSAGE_ACTION_CANCELLED;
     }
 
     /**
@@ -634,7 +641,7 @@ public class AddressBook {
         final String lowerCaseCommandType = convertLowerCase(commandType);
         final String commandArgs = commandTypeAndParams[1];
 
-        switch(commandType) {
+        switch(lowerCaseCommandType) {
             case PERSON_PROPERTY_PHONE:
                 return updatePhoneNumber(contact, commandArgs);
             case PERSON_PROPERTY_EMAIL:
@@ -682,11 +689,14 @@ public class AddressBook {
     /**
      * Clears all persons in the address book.
      *
-     * @return feedback display message for the operation result
+list     * @return feedback display message for the operation result
      */
     private static String executeClearAddressBook() {
-        clearAddressBook();
-        return MESSAGE_ADDRESSBOOK_CLEARED;
+        if(userConfirmAction()) {
+            clearAddressBook();
+            return MESSAGE_ADDRESSBOOK_CLEARED;
+        }
+        return MESSAGE_ACTION_CANCELLED;
     }
 
     /**
@@ -806,6 +816,29 @@ public class AddressBook {
                 getNameFromPerson(person), getPhoneFromPerson(person), getEmailFromPerson(person));
     }
 
+    private static boolean userConfirmAction() {
+        showToUser(MESSAGE_PROMPT + LS + COMMAND_CLEAR_DESC);
+        return getConfirmAction();
+    }
+
+    private static boolean userConfirmAction(String[] contact) {
+        showToUser(MESSAGE_PROMPT + LS + "Delete contact: " + String.format(PERSON_STRING_REPRESENTATION, getNameFromPerson(contact),
+                getPhoneFromPerson(contact), getEmailFromPerson(contact)));
+        return getConfirmAction();
+    }
+
+    private static boolean getConfirmAction() {
+        final String userInput = convertLowerCase(getUserInput());
+        switch(userInput) {
+            case "y":
+                return true;
+            case "n":
+                return false;
+            default:
+                showToUser("Invalid Response");
+                return false;
+        }
+    }
     /**
      * Updates the latest person listing view the user has seen.
      *
