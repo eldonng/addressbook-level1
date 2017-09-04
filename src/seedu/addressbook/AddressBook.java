@@ -827,7 +827,7 @@ list     * @return feedback display message for the operation result
     }
 
     private static boolean getConfirmAction() {
-        final String userInput = convertLowerCase(getUserInput());
+        final String userInput = convertLowerCase(getUserInput()).trim();
         switch(userInput) {
             case "y":
                 return true;
