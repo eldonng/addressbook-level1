@@ -11,6 +11,7 @@
 
   # address book should be emptied
   clear
+  y
   list
 
 ##########################################################
@@ -75,9 +76,11 @@
   delete -1
   delete 0
   delete 3
+  
 
   # should catch attempt to delete something already deleted
   delete 2
+  y
   delete 2
 
   # should have deleted based on last active view's index
@@ -85,10 +88,12 @@
 
   # deletes correct person
   delete 4
+  y
   list
 
   # listing indexes get updated on next request
   delete 1
+  y
   list
 
 ##########################################################
@@ -97,6 +102,7 @@
 
   # clears all
   clear
+  y
   list
 
 ##########################################################
