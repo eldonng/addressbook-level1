@@ -44,7 +44,7 @@
 
 ##########################################################
 # test find persons command
-##########################################################
+
 
   # should match none with no keywords
   find
@@ -62,6 +62,14 @@
   # find multiple with some keywords
   find Charlie Betsy
 
+##########################################################
+# test update persons command
+##########################################################
+
+  # should update none with no keywords
+  update
+  # 
+  
 ##########################################################
 # test delete person command
 ##########################################################
@@ -82,6 +90,7 @@
   delete 2
   y
   delete 2
+  y
 
   # should have deleted based on last active view's index
   list
